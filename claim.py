@@ -123,6 +123,7 @@ if __name__ == "__main__":
     parser.add_argument('devices', type=str, help='Devices to claim CSV file')
     args = parser.parse_args()
     claim_list = args.devices
+
     if not os.path.isfile(claim_list):
         print('The file specified does not exist')
         sys.exit()
@@ -132,4 +133,8 @@ if __name__ == "__main__":
     sites_cache = SiteCache(dnac)
     images_cache = ImageCache(dnac)
     templates_cache = TemplateCache(dnac)
+
+    print("Claiming devices on file:", claim_list)
+    print("#####################################")
+    # print("the device ID for SN is: {}".format(device_cache.lookup('FCW2011C0U1')))
     claim_devices(dnac, sites_cache, images_cache, templates_cache, claim_list)
