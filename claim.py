@@ -1,10 +1,11 @@
 from dnacentersdk import api
+from argparse import ArgumentParser
 import csv
+import os
+import sys
 import urllib3
 
 urllib3.disable_warnings()
-dnac = api.DNACenterAPI(username="admin", password="C!sc0123", version='2.1.2',
-                        base_url="https://10.48.82.183:443", verify=False)
 
 
 class SiteCache:
@@ -74,41 +75,61 @@ def get_template(dnac_login, config_id, user_params):
 
 def claim_devices(dnac_login, site_cache, image_cache, template_cache, devices_list):
     f = open(devices_list, 'rt')
-    devices = csv.DictReader(f)
-    for device in devices:
-        try:
-            device_id = device_cache.lookup(device['serial'])
-            site_id = site_cache.lookup(device['siteName'])
-            config_id = template_cache.lookup(device['templateName'])
-            if 'image' in device and device['image'] != '':
-                image_id = image_cache.lookup(device['image'])
+    try:
+        devices = csv.DictReader(f)
+        for device in devices:
+            try:
+                device_id = device_cache.lookup(device['serial'])
+                site_id = site_cache.lookup(device['siteName'])
+                config_id = template_cache.lookup(device['templateName'])
+                if 'image' in device and device['image'] != '':
+                    image_id = image_cache.lookup(device['image'])
+                else:
+                    image_id = ''
+            except ValueError as e:
+                print("###ERROR {},{}: {}".format(device['name'], device['serial'], e))
+                continue
+            params = get_template(dnac_login, config_id, device)
+            if 'topOfStack' in device:
+                top_of_stack = device['topOfStack']
+                device_type = "StackSwitch"
+                payload = {
+                    "imageInfo": {"imageId": image_id, "skip": False},
+                    "configInfo": {"configId": config_id, "configParameters": params},
+                    "topOfStackSerialNumber": top_of_stack
+                }
             else:
-                image_id = ''
-        except ValueError as e:
-            print("###ERROR {},{}: {}".format(device['name'], device['serial'], e))
-            continue
-        params = get_template(dnac_login, config_id, device)
-        if 'topOfStack' in device:
-            top_of_stack = device['topOfStack']
-            device_type = "StackSwitch"
-            payload = {
-                "imageInfo": {"imageId": image_id, "skip": False},
-                "configInfo": {"configId": config_id, "configParameters": params},
-                "topOfStackSerialNumber": top_of_stack
-            }
-        else:
-            device_type = "Default"
-            payload = {
-                "imageInfo": {"imageId": image_id, "skip": False},
-                "configInfo": {"configId": config_id, "configParameters": params}
-            }
+                device_type = "Default"
+                payload = {
+                    "imageInfo": {"imageId": image_id, "skip": False},
+                    "configInfo": {"configId": config_id, "configParameters": params}
+                }
 
-        claim_status = dnac_login.device_onboarding_pnp.claim_a_device_to_a_site(deviceId=device_id, siteId=site_id,
-                                                                                 type=device_type, payload=payload)
+            claim_status = dnac_login.device_onboarding_pnp.claim_a_device_to_a_site(deviceId=device_id, siteId=site_id,
+                                                                                     type=device_type, payload=payload)
+            if "Claimed" in claim_status:
+                status = "PLANNED"
+            else:
+                status = "FAILED"
+            print('Device:{} name:{} siteName:{} Status:{}'.format(device['serial'], device['name'], device['siteName'],
+                                                                   status))
+    finally:
+        f.close()
 
 
-device_cache = DeviceCache(dnac)
-sites_cache = SiteCache(dnac)
-images_cache = ImageCache(dnac)
-templates_cache = TemplateCache(dnac)
+if __name__ == "__main__":
 
+    parser = ArgumentParser(description='Path to devices CSV file')
+    parser.add_argument('devices', type=str, help='Devices to claim CSV file')
+    args = parser.parse_args()
+    claim_list = args.devices
+    if not os.path.isfile(claim_list):
+        print('The file specified does not exist')
+        sys.exit()
+
+    dnac = api.DNACenterAPI()
+    device_cache = DeviceCache(dnac)
+    sites_cache = SiteCache(dnac)
+    images_cache = ImageCache(dnac)
+    templates_cache = TemplateCache(dnac)
+    claim_devices(dnac, sites_cache, images_cache, templates_cache, claim_list)
