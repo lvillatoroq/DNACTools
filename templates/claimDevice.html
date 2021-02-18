@@ -1,0 +1,170 @@
+<!-- This page shows an empty page with MAC address query field and button
+    or a list of queried endpoint devices with associated auth status. -->
+
+{% extends "masterPage.html" %}
+
+{% block content %}
+<div class="row">
+
+    <!-- Left Rail -->
+    {% include "menu.html" %}
+
+    <!-- Middle + Right Rail -->
+    <div class="col-9 col-xl-10 col-md-9">
+        <div class="section">
+
+            <div class="headline">
+                <h2>PnP Devices</h2>
+            </div>
+
+            <!--Alert for error message-->
+            {% include "alert.html" %}
+
+            {%if claimed%}
+                <div class="alert alert--success">
+                    <div class="alert__icon icon-check-outline"></div>
+                    <div class="alert__message">PnP Devices claimed successfully!</div>
+                </div>
+            {% endif %}
+            {%if uploaded%}
+                <div class="alert alert--success">
+                    <div class="alert__icon icon-check-outline"></div>
+                    <div class="alert__message">CSV file loaded successfully!</div>
+                </div>
+            {% endif %}
+
+
+            <button type="button" class="btn" onclick="openModal('modal-large')"
+                style="float:right;">Claim Devices</button>
+
+            <!--PnP Devices list-->
+            {%if pnp_list %}
+                <div class="responsive-table">
+                    <table class="table table--lined table--selectable table">
+                        <thead>
+                            <tr>
+                                <th class="w-33">Serial</th>
+                                <th class="w-33">PID</th>
+                                <th class="w-33">SW Image</th>
+                                <th class="w-33">Stacked</th>
+                                <th class="w-33">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for device, info in pnp_list.items() %}
+                            <tr>
+                                <td>
+                                    {{device}}
+                                </td>
+                                <td>
+                                    {{info['pid']}}
+                                </td>
+                                <td>
+                                    {{info['image']}}
+                                </td>
+                                <td>
+                                    {{info['stack']}}
+                                </td>
+                                <td>
+                                    {{info['state']}}
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+
+
+            {% else %}
+                <div class="no_query">No PnP devices yet.</div>
+            {% endif %}
+
+            {%if claim_list %}
+                <div class="responsive-table">
+                    <table class="table table--lined table--selectable table">
+                        <thead>
+                            <tr>
+                                <th class="w-33">Name</th>
+                                <th class="w-33">Serial</th>
+                                <th class="w-33">Top of Stack</th>
+                                <th class="w-33">Site Name</th>
+                                <th class="w-33">Template</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for claim in claim_list %}
+                            <tr>
+                                <td>
+                                    {{claim['serial']}}
+                                </td>
+                                <td>
+                                    {{claim['serial']}}
+                                </td>
+                                <td>
+                                    {{claim['topOfStack']}}
+                                </td>
+                                <td>
+                                    {{claim['siteName']}}
+                                </td>
+                                <td>
+                                    {{claim['templateName']}}
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+
+                        </tbody>
+                    </table>
+                    <div class="form-group">
+                        <button value="Claim" name="claim_submit" class="btn btn--primary" type="submit"
+                                onclick="showLoadingText(this)"
+                                onload="showOriginalText(this, 'Add')">Claim</button>
+                    </div>
+                </div>
+
+
+            {% else %}
+                <div class="no_query">No devices in CSV</div>
+            {% endif %}
+
+            <!--Add Voucher Modal-->
+            <div class="modal modal--large hide" id="modal-large">
+                <div class="modal__dialog">
+                    <div class="modal__content">
+                        <a class="modal__close" onclick="closeModal('modal-large')"><span class="icon-close"></span></a>
+
+                        <div class="modal__header">
+                            <div class="modal__title">Claim devices</div>
+                        </div>
+
+                        <div class="modal__body">
+                            <p class="subtitle">
+                                <form id="upload_csv" action="/claimDevice" method="POST" enctype=multipart/form-data >
+
+                                    <div class="form-group">
+                                        <div class="form-group__text">
+                                            <input type="file" name="file">
+
+                                        </div>
+                                        <div class="help-block" role="alert">
+                                            <span>Upload CSV file</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <button value="Upload" name="upload_submit" class="btn btn--primary" type="submit"
+                                            onclick="showLoadingText(this)"
+                                            onload="showOriginalText(this, 'Add')">Upload</button>
+                                    </div>
+                                </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

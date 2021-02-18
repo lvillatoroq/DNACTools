@@ -136,5 +136,5 @@ if __name__ == "__main__":
 
     print("Claiming devices on file:", claim_list)
     print("#####################################")
-    # print("the device ID for SN is: {}".format(device_cache.lookup('FCW2011C0U1')))
-    claim_devices(dnac, sites_cache, images_cache, templates_cache, claim_list)
+    print("the device ID for SN is: {}".format(images_cache.lookup('cat3k_caa-universalk9.16.12.03.SPA.bin')))
+    #claim_devices(dnac, sites_cache, images_cache, templates_cache, claim_list)
