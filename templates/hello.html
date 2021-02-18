@@ -1,0 +1,26 @@
+
+{% extends "masterPage.html" %}
+
+{% block content %}
+<div class="row">
+
+    <!-- Left Rail -->
+    {% include "menu.html" %}
+
+    <!-- Middle + Right Rail -->
+    <div class="col-9 col-xl-10 col-md-9">
+        <div class="section">
+
+            <div class="headline">
+                <h2>DNA Center Tools Main Page</h2>
+            </div>
+
+            <!--Alert for error message-->
+            {% include "alert.html" %}
+
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
